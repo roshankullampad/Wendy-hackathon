@@ -62,7 +62,76 @@ class MarketingOrchestrator:
         return output, logs
 
 
-def run_workflow(query: str) -> Tuple[Dict[str, Any], List[str]]:
+OFFER_DESIGN_LABEL = "Offer Design"
+
+
+def _run_offer_design_workflow(query: str, logs: List[str]) -> Dict[str, Any]:
+    logs.append("Offer Design requires upstream insights; running dependencies.")
+    market_trends = MarketTrendsAnalystRoot()
+    customer_insights_agent = CustomerInsightsManagerAgent()
+    event_manager = EventManager()
+    offer_orchestrator = OfferOrchestratorAgent()
+    offer_design = OfferDesignRootAgent()
+
+    logs.append("Step 1: Market Trends Analyst started.")
+    trend_briefs = market_trends.run(query, logs=logs)
+    logs.append("Step 1: Market Trends Analyst completed.")
+
+    logs.append("Step 2: Customer Insights started.")
+    customer_insights = customer_insights_agent.run(query, logs=logs)
+    logs.append("Step 2: Customer Insights completed.")
+
+    logs.append("Step 3: Event Planner started.")
+    event_calendar = event_manager.run(query, logs=logs)
+    logs.append("Step 3: Event Planner completed.")
+
+    logs.append("Step 4: Offer Orchestrator started.")
+    orchestrator_payload = offer_orchestrator.run(
+        query=query,
+        trend_briefs=trend_briefs,
+        customer_insights=customer_insights,
+        event_calendar=event_calendar,
+    )
+    logs.append("Step 4: Offer Orchestrator completed.")
+
+    logs.append("Step 5: Offer Design started.")
+    offer_concepts = offer_design.run(orchestrator_payload, logs=logs)
+    logs.append("Step 5: Offer Design completed.")
+
+    return {"offer_concepts": offer_concepts}
+
+
+def run_workflow(query: str, agent_name: str | None = None) -> Tuple[Dict[str, Any], List[str]]:
     """Convenience function for the UI."""
-    orchestrator = MarketingOrchestrator()
-    return orchestrator.run(query)
+    if not agent_name or agent_name == MarketingOrchestrator.name:
+        orchestrator = MarketingOrchestrator()
+        output, logs = orchestrator.run(query)
+        logs.insert(0, f"Selected agent: {MarketingOrchestrator.name}.")
+        return output, logs
+
+    logs: List[str] = [f"Selected agent: {agent_name}."]
+    if agent_name == MarketTrendsAnalystRoot.name:
+        logs.append("Market Trends Analyst started.")
+        trend_briefs = MarketTrendsAnalystRoot().run(query, logs=logs)
+        logs.append("Market Trends Analyst completed.")
+        return {"trend_briefs": trend_briefs}, logs
+    if agent_name == CustomerInsightsManagerAgent.name:
+        logs.append("Customer Insights Manager started.")
+        customer_insights = CustomerInsightsManagerAgent().run(query, logs=logs)
+        logs.append("Customer Insights Manager completed.")
+        return {"customer_insights": customer_insights}, logs
+    if agent_name == EventManager.name:
+        logs.append("Event Planner started.")
+        event_calendar = EventManager().run(query, logs=logs)
+        logs.append("Event Planner completed.")
+        return {"event_calendar": event_calendar}, logs
+    if agent_name == OFFER_DESIGN_LABEL:
+        logs.append("Offer Design started.")
+        results = _run_offer_design_workflow(query, logs)
+        logs.append("Offer Design completed.")
+        return results, logs
+
+    logs.append(f"Unknown agent '{agent_name}'. Falling back to Marketing Orchestrator.")
+    output, orchestrator_logs = MarketingOrchestrator().run(query)
+    logs.extend(orchestrator_logs)
+    return output, logs
