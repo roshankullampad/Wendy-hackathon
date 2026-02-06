@@ -93,11 +93,12 @@ def main() -> None:
             else:
                 st.session_state["last_query"] = query
                 with st.spinner("Processing..."):
-                    results, logs = run_workflow(query)
+                    results, logs = run_workflow(query, selected_agent)
                     time.sleep(0.4)
                 st.session_state["analysis_complete"] = True
                 st.session_state["results"] = results
                 st.session_state["logs"] = logs
+                st.session_state["last_agent"] = selected_agent
                 st.success("Execution complete. Open the Results tab to view outputs.")
 
         logs: List[str] = st.session_state.get("logs", [])
@@ -107,16 +108,43 @@ def main() -> None:
                 log_placeholder.write(f"- {entry}")
 
     with results_tab:
-        st.subheader("Offer Concepts")
+        st.subheader("Results")
         if not st.session_state.get("analysis_complete"):
             st.info("Run a query in the Query tab to view results here.")
         else:
-            offers = st.session_state.get("results", {}).get("offer_concepts", [])
-            if not offers:
-                st.warning("No offers generated. Run the workflow again.")
+            last_agent = st.session_state.get("last_agent")
+            results = st.session_state.get("results", {})
+            if not last_agent:
+                st.info("Run a query in the Query tab to view results here.")
             else:
-                for offer in offers:
-                    render_offer_card(offer)
+                st.caption(f"Showing output for: {last_agent}")
+                if last_agent in ("Marketing Orchestrator", "Offer Design"):
+                    offers = results.get("offer_concepts", [])
+                    if not offers:
+                        st.warning("No offers generated. Run the workflow again.")
+                    else:
+                        for offer in offers:
+                            render_offer_card(offer)
+                elif last_agent == "Market Trends Analyst":
+                    trend_briefs = results.get("trend_briefs", [])
+                    if not trend_briefs:
+                        st.warning("No trend briefs generated. Run the workflow again.")
+                    else:
+                        st.json(trend_briefs)
+                elif last_agent == "Customer Insights Manager":
+                    customer_insights = results.get("customer_insights", [])
+                    if not customer_insights:
+                        st.warning("No customer insights generated. Run the workflow again.")
+                    else:
+                        st.json(customer_insights)
+                elif last_agent == "Event Planner":
+                    event_calendar = results.get("event_calendar", {})
+                    if not event_calendar:
+                        st.warning("No event calendar generated. Run the workflow again.")
+                    else:
+                        st.json(event_calendar)
+                else:
+                    st.json(results)
 
 
 if __name__ == "__main__":
