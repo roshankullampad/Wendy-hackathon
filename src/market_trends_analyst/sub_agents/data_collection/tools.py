@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 from typing import Dict, List
 
 try:
@@ -30,9 +31,9 @@ SAMPLE_SOURCES = [
 def _fallback_results(query: str, limit: int) -> List[Dict[str, str]]:
     if not SAMPLE_SOURCES:
         return []
-    offset = abs(hash(query)) % len(SAMPLE_SOURCES)
-    rotated = SAMPLE_SOURCES[offset:] + SAMPLE_SOURCES[:offset]
-    return rotated[:limit]
+    sources = list(SAMPLE_SOURCES)
+    random.shuffle(sources)
+    return sources[:limit]
 
 
 def google_search(query: str, limit: int = 12) -> List[Dict[str, str]]:

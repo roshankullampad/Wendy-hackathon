@@ -2,10 +2,34 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from src.market_trends_analyst.sub_agents.data_collection.agent import DataCollectionAgent
-from src.market_trends_analyst.sub_agents.research_synthesis.agent import (
-    ResearchSynthesisAgent,
+from google.adk.agents import SequentialAgent
+
+from src.market_trends_analyst.sub_agents.data_collection.agent import (
+    build_agent as build_data_collection_agent,
 )
+from src.market_trends_analyst.sub_agents.research_synthesis.agent import (
+    NAME as RESEARCH_SYNTHESIS_NAME,
+)
+from src.market_trends_analyst.sub_agents.research_synthesis.agent import (
+    build_agent as build_research_synthesis_agent,
+)
+from src.utils.adk_runner import (
+    coerce_list,
+    extract_final_responses,
+    parse_json_payload,
+    run_agent,
+)
+
+
+def build_agent() -> SequentialAgent:
+    return SequentialAgent(
+        name=MarketTrendsAnalystRoot.name,
+        description=MarketTrendsAnalystRoot.description,
+        sub_agents=[
+            build_data_collection_agent(),
+            build_research_synthesis_agent(),
+        ],
+    )
 
 
 class MarketTrendsAnalystRoot:
@@ -17,17 +41,17 @@ class MarketTrendsAnalystRoot:
         "synthesizing them into trend briefs."
     )
 
-    def __init__(self) -> None:
-        self.data_collection = DataCollectionAgent()
-        self.research_synthesis = ResearchSynthesisAgent()
-
     def run(self, query: str, logs: List[str] | None = None) -> List[Dict[str, Any]]:
         if logs is not None:
             logs.append("Market Trends: Data Collection Agent running.")
-        data_payload = self.data_collection.run(query)
-
-        if logs is not None:
             logs.append("Market Trends: Research Synthesis Agent running.")
-        trend_briefs = self.research_synthesis.run(data_payload)
 
+        events = run_agent(build_agent(), query)
+        outputs = extract_final_responses(events)
+
+        synthesis_text = outputs.get(RESEARCH_SYNTHESIS_NAME, "")
+        synthesis_payload = parse_json_payload(synthesis_text)
+        trend_briefs = coerce_list(synthesis_payload, key="trend_briefs")
+        if not trend_briefs and synthesis_payload is None:
+            trend_briefs = []
         return trend_briefs

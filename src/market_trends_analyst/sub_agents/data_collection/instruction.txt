@@ -11,7 +11,7 @@ Tasks:
 3) Collect 10-15 relevant sources from the last 12-18 months.
 
 Output format:
-Return a structured object containing:
+Return JSON only as a structured object containing:
 - urls: List of URLs with source_type (news, blog, social_media, forum)
 - notes: Optional comments such as search terms used
 

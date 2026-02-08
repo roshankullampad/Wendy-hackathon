@@ -2,11 +2,50 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Tuple
 
-from src.customer_insights.agent import CustomerInsightsManagerAgent
-from src.event_planner.agent import EventManager
-from src.market_trends_analyst.agent import MarketTrendsAnalystRoot
-from src.offer_design.agent import OfferDesignRootAgent
-from src.orchestrator.agent import OfferOrchestratorAgent
+from google.adk.agents import SequentialAgent
+
+from src.customer_insights.agent import CustomerInsightsManagerAgent, build_agent as build_customer_insights_agent
+from src.customer_insights.sub_agents.profile_synthesizer.agent import (
+    NAME as PROFILE_SYNTHESIZER_NAME,
+)
+from src.event_planner.agent import (
+    AGENT_NAME as EVENT_PLANNER_AGENT_NAME,
+    EventManager,
+    build_agent as build_event_planner_agent,
+)
+from src.market_trends_analyst.agent import (
+    MarketTrendsAnalystRoot,
+    build_agent as build_market_trends_agent,
+)
+from src.market_trends_analyst.sub_agents.research_synthesis.agent import (
+    NAME as RESEARCH_SYNTHESIS_NAME,
+)
+from src.offer_design.agent import build_agent as build_offer_design_agent
+from src.offer_design.sub_agents.simplified_offer_design.agent import (
+    NAME as SIMPLIFIED_OFFER_DESIGN_NAME,
+)
+from src.orchestrator.agent import build_agent as build_offer_orchestrator_agent
+from src.utils.adk_runner import (
+    coerce_dict,
+    coerce_list,
+    extract_final_responses,
+    parse_json_payload,
+    run_agent,
+)
+
+
+def build_agent() -> SequentialAgent:
+    return SequentialAgent(
+        name=MarketingOrchestrator.name,
+        description=MarketingOrchestrator.description,
+        sub_agents=[
+            build_market_trends_agent(),
+            build_customer_insights_agent(),
+            build_event_planner_agent(),
+            build_offer_orchestrator_agent(),
+            build_offer_design_agent(),
+        ],
+    )
 
 
 class MarketingOrchestrator:
@@ -18,40 +57,33 @@ class MarketingOrchestrator:
         "and offer design agents in sequence."
     )
 
-    def __init__(self) -> None:
-        self.market_trends = MarketTrendsAnalystRoot()
-        self.customer_insights = CustomerInsightsManagerAgent()
-        self.event_manager = EventManager()
-        self.offer_orchestrator = OfferOrchestratorAgent()
-        self.offer_design = OfferDesignRootAgent()
-
     def run(self, query: str) -> Tuple[Dict[str, Any], List[str]]:
         logs: List[str] = []
 
         logs.append("Step 1: Market Trends Analyst started.")
-        trend_briefs = self.market_trends.run(query, logs=logs)
-        logs.append("Step 1: Market Trends Analyst completed.")
-
         logs.append("Step 2: Customer Insights started.")
-        customer_insights = self.customer_insights.run(query, logs=logs)
-        logs.append("Step 2: Customer Insights completed.")
-
         logs.append("Step 3: Event Planner started.")
-        event_calendar = self.event_manager.run(query, logs=logs)
-        logs.append("Step 3: Event Planner completed.")
-
         logs.append("Step 4: Offer Orchestrator started.")
-        orchestrator_payload = self.offer_orchestrator.run(
-            query=query,
-            trend_briefs=trend_briefs,
-            customer_insights=customer_insights,
-            event_calendar=event_calendar,
-        )
-        logs.append("Step 4: Offer Orchestrator completed.")
-
         logs.append("Step 5: Offer Design started.")
-        offer_concepts = self.offer_design.run(orchestrator_payload, logs=logs)
+
+        events = run_agent(build_agent(), query)
+        outputs = extract_final_responses(events)
+
+        logs.append("Step 1: Market Trends Analyst completed.")
+        logs.append("Step 2: Customer Insights completed.")
+        logs.append("Step 3: Event Planner completed.")
+        logs.append("Step 4: Offer Orchestrator completed.")
         logs.append("Step 5: Offer Design completed.")
+
+        trend_payload = parse_json_payload(outputs.get(RESEARCH_SYNTHESIS_NAME, ""))
+        customer_payload = parse_json_payload(outputs.get(PROFILE_SYNTHESIZER_NAME, ""))
+        event_payload = parse_json_payload(outputs.get(EVENT_PLANNER_AGENT_NAME, ""))
+        offer_payload = parse_json_payload(outputs.get(SIMPLIFIED_OFFER_DESIGN_NAME, ""))
+
+        trend_briefs = coerce_list(trend_payload, key="trend_briefs")
+        customer_insights = coerce_list(customer_payload, key="customer_insights")
+        event_calendar = coerce_dict(event_payload)
+        offer_concepts = coerce_list(offer_payload, key="offer_concepts")
 
         output = {
             "trend_briefs": trend_briefs,
@@ -67,38 +99,9 @@ OFFER_DESIGN_LABEL = "Offer Design"
 
 def _run_offer_design_workflow(query: str, logs: List[str]) -> Dict[str, Any]:
     logs.append("Offer Design requires upstream insights; running dependencies.")
-    market_trends = MarketTrendsAnalystRoot()
-    customer_insights_agent = CustomerInsightsManagerAgent()
-    event_manager = EventManager()
-    offer_orchestrator = OfferOrchestratorAgent()
-    offer_design = OfferDesignRootAgent()
-
-    logs.append("Step 1: Market Trends Analyst started.")
-    trend_briefs = market_trends.run(query, logs=logs)
-    logs.append("Step 1: Market Trends Analyst completed.")
-
-    logs.append("Step 2: Customer Insights started.")
-    customer_insights = customer_insights_agent.run(query, logs=logs)
-    logs.append("Step 2: Customer Insights completed.")
-
-    logs.append("Step 3: Event Planner started.")
-    event_calendar = event_manager.run(query, logs=logs)
-    logs.append("Step 3: Event Planner completed.")
-
-    logs.append("Step 4: Offer Orchestrator started.")
-    orchestrator_payload = offer_orchestrator.run(
-        query=query,
-        trend_briefs=trend_briefs,
-        customer_insights=customer_insights,
-        event_calendar=event_calendar,
-    )
-    logs.append("Step 4: Offer Orchestrator completed.")
-
-    logs.append("Step 5: Offer Design started.")
-    offer_concepts = offer_design.run(orchestrator_payload, logs=logs)
-    logs.append("Step 5: Offer Design completed.")
-
-    return {"offer_concepts": offer_concepts}
+    output, orchestrator_logs = MarketingOrchestrator().run(query)
+    logs.extend(orchestrator_logs)
+    return {"offer_concepts": output.get("offer_concepts", [])}
 
 
 def run_workflow(query: str, agent_name: str | None = None) -> Tuple[Dict[str, Any], List[str]]:

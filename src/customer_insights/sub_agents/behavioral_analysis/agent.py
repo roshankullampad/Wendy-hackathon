@@ -1,27 +1,23 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict
+
+from google.adk.agents.llm_agent import LlmAgent
 
 from src.customer_insights.sub_agents.behavioral_analysis.tools import (
     generate_synthetic_behavioral_data,
 )
-from src.utils.instruction_loader import load_instruction
+from src.utils.adk_agent_factory import build_llm_agent
+
+NAME = "Behavioral Analysis Agent"
+DESCRIPTION = "Analyzes structured behavioral data with synthetic metrics."
 
 
-class BehavioralAnalysisAgent:
-    """Generates synthetic behavioral segments and metrics."""
-
-    name = "Behavioral Analysis Agent"
-    description = "Analyzes structured behavioral data with synthetic metrics."
-
-    def __init__(self) -> None:
-        instruction_path = Path(__file__).with_name("instruction.txt")
-        self.instructions = load_instruction(instruction_path)
-
-    def run(self, query: str) -> Dict[str, Any]:
-        segments = generate_synthetic_behavioral_data(num_segments=3)
-        return {
-            "topic": query,
-            "segments": segments,
-        }
+def build_agent() -> LlmAgent:
+    instruction_path = Path(__file__).with_name("instruction.txt")
+    return build_llm_agent(
+        name=NAME,
+        description=DESCRIPTION,
+        instruction_path=instruction_path,
+        tools=[generate_synthetic_behavioral_data],
+    )

@@ -2,12 +2,34 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
+from google.adk.agents import SequentialAgent
+
 from src.customer_insights.sub_agents.behavioral_analysis.agent import (
-    BehavioralAnalysisAgent,
+    build_agent as build_behavioral_analysis_agent,
 )
 from src.customer_insights.sub_agents.profile_synthesizer.agent import (
-    ProfileSynthesizerAgent,
+    NAME as PROFILE_SYNTHESIZER_NAME,
 )
+from src.customer_insights.sub_agents.profile_synthesizer.agent import (
+    build_agent as build_profile_synthesizer_agent,
+)
+from src.utils.adk_runner import (
+    coerce_list,
+    extract_final_responses,
+    parse_json_payload,
+    run_agent,
+)
+
+
+def build_agent() -> SequentialAgent:
+    return SequentialAgent(
+        name=CustomerInsightsManagerAgent.name,
+        description=CustomerInsightsManagerAgent.description,
+        sub_agents=[
+            build_behavioral_analysis_agent(),
+            build_profile_synthesizer_agent(),
+        ],
+    )
 
 
 class CustomerInsightsManagerAgent:
@@ -19,17 +41,17 @@ class CustomerInsightsManagerAgent:
         "actionable customer insight segments."
     )
 
-    def __init__(self) -> None:
-        self.behavioral_analysis = BehavioralAnalysisAgent()
-        self.profile_synthesizer = ProfileSynthesizerAgent()
-
     def run(self, query: str, logs: List[str] | None = None) -> List[Dict[str, Any]]:
         if logs is not None:
             logs.append("Customer Insights: Behavioral Analysis Agent running.")
-        behavioral_payload = self.behavioral_analysis.run(query)
-
-        if logs is not None:
             logs.append("Customer Insights: Profile Synthesizer Agent running.")
-        customer_insights = self.profile_synthesizer.run(behavioral_payload)
 
-        return customer_insights
+        events = run_agent(build_agent(), query)
+        outputs = extract_final_responses(events)
+
+        profile_text = outputs.get(PROFILE_SYNTHESIZER_NAME, "")
+        profile_payload = parse_json_payload(profile_text)
+        insights = coerce_list(profile_payload, key="customer_insights")
+        if not insights and profile_payload is None:
+            insights = []
+        return insights

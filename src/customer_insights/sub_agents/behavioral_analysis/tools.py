@@ -6,10 +6,13 @@ from typing import Any, Dict, List
 from faker import Faker
 
 
-def generate_synthetic_behavioral_data(num_segments: int = 3) -> List[Dict[str, Any]]:
+def generate_synthetic_behavioral_data(
+    num_segments: int = 3, seed: int | None = None
+) -> List[Dict[str, Any]]:
     fake = Faker()
-    Faker.seed(42)
-    random.seed(42)
+    if seed is not None:
+        Faker.seed(seed)
+        random.seed(seed)
 
     segments = []
     segment_templates = [
