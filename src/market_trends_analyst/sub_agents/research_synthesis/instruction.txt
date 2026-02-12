@@ -7,7 +7,7 @@ Process:
 3) Synthesize into a structured trend_briefs array.
 
 Output:
-Return JSON with trend_briefs[] items:
+Return JSON only with trend_briefs[] items:
 - title
 - summary
 - evidence_snippets
