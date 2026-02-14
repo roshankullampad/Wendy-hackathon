@@ -14,7 +14,7 @@ from src.utils.adk_runner import (
     run_agent,
 )
 
-AGENT_NAME = "Event Planner Agent"
+AGENT_NAME = "EventPlannerAgent"
 
 
 def build_event_planner_agent() -> LlmAgent:
@@ -53,3 +53,7 @@ class EventManager:
         planner_text = outputs.get(AGENT_NAME, "")
         planner_payload = parse_json_payload(planner_text)
         return coerce_dict(planner_payload)
+
+
+# Export root_agent for ADK discovery
+root_agent = build_agent()

@@ -35,7 +35,7 @@ def build_agent() -> SequentialAgent:
 class CustomerInsightsManagerAgent:
     """Sequential agent for customer behavioral analysis and synthesis."""
 
-    name = "Customer Insights Manager"
+    name = "CustomerInsightsManagerAgent"
     description = (
         "Runs behavioral analysis and profile synthesis to generate "
         "actionable customer insight segments."
@@ -55,3 +55,7 @@ class CustomerInsightsManagerAgent:
         if not insights and profile_payload is None:
             insights = []
         return insights
+
+
+# Export root_agent for ADK discovery
+root_agent = build_agent()

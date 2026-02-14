@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import secrets
 from typing import Sequence
 
+from dotenv import load_dotenv
 from google.adk.agents.llm_agent import LlmAgent
 from google.genai import types
 
 from src.utils.instruction_loader import load_instruction
+
+# Load environment variables from .env file
+load_dotenv()
 
 DEFAULT_MODEL = "gemini-2.5-flash"
 DEFAULT_TEMPERATURE = 0.7

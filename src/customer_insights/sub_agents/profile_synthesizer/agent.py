@@ -6,7 +6,7 @@ from google.adk.agents.llm_agent import LlmAgent
 
 from src.utils.adk_agent_factory import build_llm_agent
 
-NAME = "Profile Synthesizer Agent"
+NAME = "ProfileSynthesizerAgent"
 DESCRIPTION = "Creates narrative customer insights from behavioral metrics."
 
 

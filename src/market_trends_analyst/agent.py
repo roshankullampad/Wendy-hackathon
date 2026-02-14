@@ -35,7 +35,7 @@ def build_agent() -> SequentialAgent:
 class MarketTrendsAnalystRoot:
     """Sequential agent that runs data collection then research synthesis."""
 
-    name = "Market Trends Analyst"
+    name = "MarketTrendsAnalyst"
     description = (
         "Analyzes fast food market trends by collecting sources and "
         "synthesizing them into trend briefs."
@@ -55,3 +55,7 @@ class MarketTrendsAnalystRoot:
         if not trend_briefs and synthesis_payload is None:
             trend_briefs = []
         return trend_briefs
+
+
+# Export root_agent for ADK discovery
+root_agent = build_agent()

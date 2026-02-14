@@ -48,10 +48,14 @@ def build_agent() -> SequentialAgent:
     )
 
 
+# Export root_agent for ADK discovery
+root_agent = build_agent()
+
+
 class MarketingOrchestrator:
     """Root agent that runs the full workflow in sequence."""
 
-    name = "Marketing Orchestrator"
+    name = "MarketingOrchestrator"
     description = (
         "Coordinates the market trends, customer insights, event planning, "
         "and offer design agents in sequence."

@@ -7,7 +7,7 @@ from google.adk.agents.llm_agent import LlmAgent
 from src.market_trends_analyst.sub_agents.data_collection.tools import google_search
 from src.utils.adk_agent_factory import build_llm_agent
 
-NAME = "Data Collection Agent"
+NAME = "DataCollectionAgent"
 DESCRIPTION = "Fetches raw data points and URLs from search tools without analyzing content."
 
 

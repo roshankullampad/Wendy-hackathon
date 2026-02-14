@@ -30,7 +30,7 @@ def build_agent() -> SequentialAgent:
 class OfferDesignRootAgent:
     """Root agent that delegates to the simplified offer design agent."""
 
-    name = "Offer Design Root"
+    name = "OfferDesignRootAgent"
     description = "Generates offer concepts based on orchestrated insights."
 
     def run(
@@ -49,3 +49,7 @@ class OfferDesignRootAgent:
         if not offer_concepts and offer_payload is None:
             offer_concepts = []
         return offer_concepts
+
+
+# Export root_agent for ADK discovery
+root_agent = build_agent()

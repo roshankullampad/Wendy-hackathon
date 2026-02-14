@@ -15,7 +15,7 @@ from src.utils.adk_runner import (
     run_agent,
 )
 
-AGENT_NAME = "Offer Orchestrator Agent"
+AGENT_NAME = "OfferOrchestratorAgent"
 
 
 def build_offer_orchestrator_agent() -> LlmAgent:
@@ -38,7 +38,7 @@ def build_agent() -> SequentialAgent:
 class OfferOrchestratorAgent:
     """Combines all upstream outputs into a single payload."""
 
-    name = "Offer Orchestrator"
+    name = "OfferOrchestratorAgent"
     description = "Combines trend briefs, customer insights, and events."
 
     def run(
@@ -60,3 +60,7 @@ class OfferOrchestratorAgent:
         orchestrator_text = outputs.get(AGENT_NAME, "")
         orchestrator_payload = parse_json_payload(orchestrator_text)
         return coerce_dict(orchestrator_payload)
+
+
+# Export root_agent for ADK discovery
+root_agent = build_agent()
