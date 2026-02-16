@@ -1,8 +1,15 @@
 from __future__ import annotations
 
+from pathlib import Path
+import sys
 from typing import Any, Dict, List, Tuple
 
 from google.adk.agents import SequentialAgent
+
+# ADK loads apps with /workspace/src on sys.path; add project root so src.* imports resolve.
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.customer_insights.agent import CustomerInsightsManagerAgent, build_agent as build_customer_insights_agent
 from src.customer_insights.sub_agents.profile_synthesizer.agent import (
@@ -33,10 +40,12 @@ from src.utils.adk_runner import (
     run_agent,
 )
 
+ADK_ROOT_NAME = "marketing_orchestrator"
+
 
 def build_agent() -> SequentialAgent:
     return SequentialAgent(
-        name=MarketingOrchestrator.name,
+        name=ADK_ROOT_NAME,
         description=MarketingOrchestrator.description,
         sub_agents=[
             build_market_trends_agent(),
@@ -138,3 +147,6 @@ def run_workflow(query: str, agent_name: str | None = None) -> Tuple[Dict[str, A
     output, orchestrator_logs = MarketingOrchestrator().run(query)
     logs.extend(orchestrator_logs)
     return output, logs
+
+
+root_agent = build_agent()

@@ -9,7 +9,7 @@ from src.market_trends_analyst.sub_agents.research_synthesis.tools import (
 )
 from src.utils.adk_agent_factory import build_llm_agent
 
-NAME = "Research Synthesis Agent"
+NAME = "research_synthesis_agent"
 DESCRIPTION = "Analyzes raw data sources and produces evidence-based trend briefs."
 
 
