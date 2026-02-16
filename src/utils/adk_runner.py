@@ -92,6 +92,10 @@ def _normalize_runner_error(error: Exception) -> RuntimeError:
         return error
 
     message = str(error)
+    if "Temporary failure in name resolution" in message or "ConnectError" in message:
+        return RuntimeError(
+            "Unable to reach the Gemini API endpoint. Check network/DNS access and retry."
+        )
     if "Missing key inputs argument" in message:
         return RuntimeError(
             "LLM credentials are missing. Set GOOGLE_API_KEY or configure Vertex AI "
