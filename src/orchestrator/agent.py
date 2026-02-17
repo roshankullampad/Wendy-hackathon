@@ -2,10 +2,16 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
 from typing import Any, Dict, List
 
 from google.adk.agents import SequentialAgent
 from google.adk.agents.llm_agent import LlmAgent
+
+# ADK loads apps with /workspace/src on sys.path; add project root so src.* imports resolve.
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.utils.adk_agent_factory import build_llm_agent
 from src.utils.adk_runner import (
@@ -15,7 +21,8 @@ from src.utils.adk_runner import (
     run_agent,
 )
 
-AGENT_NAME = "Offer Orchestrator Agent"
+ADK_ROOT_NAME = "offer_orchestrator"
+AGENT_NAME = "offer_orchestrator_agent"
 
 
 def build_offer_orchestrator_agent() -> LlmAgent:
@@ -29,7 +36,7 @@ def build_offer_orchestrator_agent() -> LlmAgent:
 
 def build_agent() -> SequentialAgent:
     return SequentialAgent(
-        name=OfferOrchestratorAgent.name,
+        name=ADK_ROOT_NAME,
         description=OfferOrchestratorAgent.description,
         sub_agents=[build_offer_orchestrator_agent()],
     )
@@ -60,3 +67,6 @@ class OfferOrchestratorAgent:
         orchestrator_text = outputs.get(AGENT_NAME, "")
         orchestrator_payload = parse_json_payload(orchestrator_text)
         return coerce_dict(orchestrator_payload)
+
+
+root_agent = build_agent()

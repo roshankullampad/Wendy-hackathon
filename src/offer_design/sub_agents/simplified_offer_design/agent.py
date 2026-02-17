@@ -6,7 +6,7 @@ from google.adk.agents.llm_agent import LlmAgent
 
 from src.utils.adk_agent_factory import build_llm_agent
 
-NAME = "Simplified Offer Design Agent"
+NAME = "simplified_offer_design_agent"
 DESCRIPTION = "Synthesizes insights into 3 prioritized offer concepts."
 
 

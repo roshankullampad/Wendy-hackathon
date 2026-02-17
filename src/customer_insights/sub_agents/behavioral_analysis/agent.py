@@ -9,7 +9,7 @@ from src.customer_insights.sub_agents.behavioral_analysis.tools import (
 )
 from src.utils.adk_agent_factory import build_llm_agent
 
-NAME = "Behavioral Analysis Agent"
+NAME = "behavioral_analysis_agent"
 DESCRIPTION = "Analyzes structured behavioral data with synthetic metrics."
 
 

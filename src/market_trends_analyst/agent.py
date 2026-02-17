@@ -1,8 +1,15 @@
 from __future__ import annotations
 
+from pathlib import Path
+import sys
 from typing import Any, Dict, List
 
 from google.adk.agents import SequentialAgent
+
+# ADK loads apps with /workspace/src on sys.path; add project root so src.* imports resolve.
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.market_trends_analyst.sub_agents.data_collection.agent import (
     build_agent as build_data_collection_agent,
@@ -20,10 +27,12 @@ from src.utils.adk_runner import (
     run_agent,
 )
 
+ADK_ROOT_NAME = "market_trends_analyst"
+
 
 def build_agent() -> SequentialAgent:
     return SequentialAgent(
-        name=MarketTrendsAnalystRoot.name,
+        name=ADK_ROOT_NAME,
         description=MarketTrendsAnalystRoot.description,
         sub_agents=[
             build_data_collection_agent(),
@@ -55,3 +64,6 @@ class MarketTrendsAnalystRoot:
         if not trend_briefs and synthesis_payload is None:
             trend_briefs = []
         return trend_briefs
+
+
+root_agent = build_agent()

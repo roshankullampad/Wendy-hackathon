@@ -1,8 +1,15 @@
 from __future__ import annotations
 
+from pathlib import Path
+import sys
 from typing import Any, Dict, List
 
 from google.adk.agents import SequentialAgent
+
+# ADK loads apps with /workspace/src on sys.path; add project root so src.* imports resolve.
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.customer_insights.sub_agents.behavioral_analysis.agent import (
     build_agent as build_behavioral_analysis_agent,
@@ -20,10 +27,12 @@ from src.utils.adk_runner import (
     run_agent,
 )
 
+ADK_ROOT_NAME = "customer_insights_manager"
+
 
 def build_agent() -> SequentialAgent:
     return SequentialAgent(
-        name=CustomerInsightsManagerAgent.name,
+        name=ADK_ROOT_NAME,
         description=CustomerInsightsManagerAgent.description,
         sub_agents=[
             build_behavioral_analysis_agent(),
@@ -55,3 +64,6 @@ class CustomerInsightsManagerAgent:
         if not insights and profile_payload is None:
             insights = []
         return insights
+
+
+root_agent = build_agent()

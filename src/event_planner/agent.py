@@ -1,10 +1,16 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 from typing import Any, Dict, List
 
 from google.adk.agents import SequentialAgent
 from google.adk.agents.llm_agent import LlmAgent
+
+# ADK loads apps with /workspace/src on sys.path; add project root so src.* imports resolve.
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.utils.adk_agent_factory import build_llm_agent
 from src.utils.adk_runner import (
@@ -14,7 +20,8 @@ from src.utils.adk_runner import (
     run_agent,
 )
 
-AGENT_NAME = "Event Planner Agent"
+ADK_ROOT_NAME = "event_planner"
+AGENT_NAME = "event_planner_agent"
 
 
 def build_event_planner_agent() -> LlmAgent:
@@ -28,7 +35,7 @@ def build_event_planner_agent() -> LlmAgent:
 
 def build_agent() -> SequentialAgent:
     return SequentialAgent(
-        name=EventManager.name,
+        name=ADK_ROOT_NAME,
         description=EventManager.description,
         sub_agents=[build_event_planner_agent()],
     )
@@ -53,3 +60,6 @@ class EventManager:
         planner_text = outputs.get(AGENT_NAME, "")
         planner_payload = parse_json_payload(planner_text)
         return coerce_dict(planner_payload)
+
+
+root_agent = build_agent()
